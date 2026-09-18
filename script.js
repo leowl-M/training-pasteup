@@ -119,6 +119,18 @@ const FONTS = [
   {f:'Verdana, Geneva, sans-serif',w:700,g:'grotesk'}
 ];
 const BY_GROUP = FONTS.reduce((m,f)=>((m[f.g]=m[f.g]||[]).push(f),m),{});
+const GROUP_LABELS = {display:'Display pesanti', condensed:'Condensati', serif:'Serif editoriali', mono:'Macchina da scrivere', grotesk:'Grotesche'};
+
+/* Picks a face from the user's selection. Always draws twice from the stream
+   (group, then face) so enabling/disabling a font never shifts the rest of
+   the composition. */
+function pickFont(rng, groups){
+  const gsel = rng.pick(groups);
+  const active = FONTS.filter((f,i)=>state.fonts[i]);
+  const pool = active.length ? (active.filter(f=>f.g===gsel).length ? active.filter(f=>f.g===gsel) : active)
+                             : BY_GROUP[gsel];
+  return rng.pick(pool);
+}
 
 /* =========================================================
    4. MATERIAL PRESETS — a cut gets a preset first, variations second
@@ -199,6 +211,10 @@ const state = {
   surface:'black',
   palette:['#e0392b','#6e9cc4','#e8873a','#f3d42f'],
   ink:'colour', flat:false, transparent:false,
+  layout:'collage',            // 'collage' | 'grid'
+  anim:'none',                 // 'none' | 'jitter' | 'boil' | 'wave' | 'paste'
+  animFps:8, animAmt:.5,
+  fonts:FONTS.map(()=>true),   // which faces the cutter is allowed to use
   s:Object.fromEntries(SLIDERS.map(s=>[s.id,s.v/100])),
   cuts:[], fontsReady:false,
   cutSeeds:{},   // key -> pinned seed (re-roll or lock)
@@ -253,7 +269,8 @@ function toGrey(hex,shift){
 function monoize(c){
   if(state.ink==='pure'){
     // two inks only, no halfway house
-    const white = (c.fiberSeed%100) < 55;
+    // intensity now steers how many tiles come out light (matters a lot in grid mode)
+    const white = (c.fiberSeed%100) < (88 - state.s.intensity*72);
     c.paper = white ? '#ffffff' : '#000000';
     c.ink   = white ? '#000000' : '#ffffff';
     if(c.backing) c.backing.color = white ? '#000000' : '#ffffff';
@@ -277,6 +294,25 @@ function flatten(c){
   c.edge = state.ink==='pure' ? 0 : c.edge*0.35;
   return c;
 }
+
+/* ---- geometric mode: a cut becomes a square tile with a knocked-out letter ---- */
+const SQUARE = [[0,0],[1,0],[1,1],[0,1]];
+const TILE_STEPS = [1,1,1,1,1,0.78,1.28];   // occasional taller/shorter tile
+function geometrize(c){
+  c.poly    = SQUARE;
+  c.backing = null;
+  c.skew    = 0;
+  c.scaleX  = 1;
+  c.padL=c.padR=c.padT=c.padB=0;
+  c.lift    = 0;
+  c.edge    = 0;
+  c.stroke  = null;
+  // tile sizes quantise: at sizeVar 0 every tile is identical
+  const step = TILE_STEPS[c.fiberSeed % TILE_STEPS.length];
+  c.sizeMul = 1 + (step-1)*state.s.sizeVar;
+  return c;
+}
+const isGrid = () => state.layout==='grid';
 
 /* the board colour once ink mode has had its say */
 function boardBase(){
@@ -330,7 +366,7 @@ function createCharacterStyle(str,rng,ctxOpts){
   const mat = MATERIALS[matKey];
   const S = state.s;
   const groups = mat.groups;
-  const font = rng.pick(BY_GROUP[rng.pick(groups)]);
+  const font = pickFont(rng, groups);
   const m = metrics(str,font);
 
   const stockKind = rng.weighted(mat.stocks);
@@ -409,6 +445,7 @@ function createCharacterStyle(str,rng,ctxOpts){
   let out = style;
   if(state.ink!=='colour') out = monoize(out);
   if(isFlat()) out = flatten(out);
+  if(isGrid()) out = geometrize(out);
   return out;
 }
 
@@ -431,9 +468,10 @@ function buildCuts(){
       const material = rng.weighted(MAT_WEIGHTS);
       const asBlock = word.length<=4 && word.length>1 && rng.chance(.13);
       const wi = wordIndex++;
+      const tiltR = rng.bell(), scaleR = rng.bell();   // always drawn, so the stream is stable
       const group = {index:wi, line:li, cuts:[], material,
-                     tilt: rng.bell()*(2.2+S.chaos*5.5)*Math.PI/180,
-                     scale: 1 + rng.bell()*(.04+S.sizeVar*.12)};
+                     tilt:  isGrid()? 0 : tiltR*(2.2+S.chaos*5.5)*Math.PI/180,
+                     scale: isGrid()? 1 : 1 + scaleR*(.04+S.sizeVar*.12)};
 
       // every cut is generated from its OWN sub-stream: one cut can be re-rolled
       // or locked without shifting the randomness of any other cut
@@ -473,17 +511,30 @@ function buildCuts(){
     const drawn = r2.int(0,SEED_MAX);
     const pinned = state.cutSeeds[c.key];
     const q = new Rng(pinned !== undefined ? ((pinned ^ 0x9E3779B9)>>>0) : drawn);
-    c.rotBase = q.bell()*(4+S.rotation*9)*Math.PI/180
-              + (q.chance(.09)? q.sign()*q.range(4,7)*Math.PI/180 : 0);
-    c.dyF = q.bell()*(.03+S.chaos*.19);
-    c.overlap = 1 - q.range(.02,.09) - S.chaos*q.range(0,.09) + S.spacing*.06;
-    c.gapExtra = q.range(-.05,.035)+S.spacing*.09;
+    const rb = q.bell(), kick = q.chance(.09)? q.sign()*q.range(4,7) : 0;
+    const dy = q.bell(), ov1 = q.range(.02,.09), ov2 = q.range(0,.09), ge = q.range(-.05,.035);
+    if(isGrid()){
+      // a grid has no wobble: tiles sit flat and butt together
+      c.rotBase = 0;
+      c.dyF = 0;
+      c.overlap = 1;
+      c.gapExtra = S.spacing*.14;
+    }else{
+      c.rotBase = rb*(4+S.rotation*9)*Math.PI/180 + kick*Math.PI/180;
+      c.dyF = dy*(.03+S.chaos*.19);
+      c.overlap = 1 - ov1 - S.chaos*ov2 + S.spacing*.06;
+      c.gapExtra = ge + S.spacing*.09;
+    }
   });
   return out;
 }
 
 /* ---- pure geometry: no drawing, so the fit loop is cheap ---- */
 function sizeOf(c,F){
+  if(isGrid()){
+    const side = F*c.sizeMul;
+    return {fs:side, w:side, h:side};      // a tile is square by definition
+  }
   const fs = F*c.sizeMul*(c.group?c.group.scale:1);
   const w = (c.metric.w*c.scaleX + c.padL + c.padR)*fs;
   const h = (c.metric.asc + c.metric.desc + c.padT + c.padB)*fs;
@@ -491,10 +542,11 @@ function sizeOf(c,F){
 }
 
 function LEAD(){ return 0.50 + state.s.leading*0.95; }
+const GLYPH_FILL = 0.62;   // cap height as a share of the tile side, in grid mode
 
 function layout(cuts,F,availW,availH){
   const S = state.s;
-  const wordGap = F*(0.20 + S.spacing*0.34);
+  const wordGap = isGrid()? F*(0.05 + S.spacing*0.5) : F*(0.20 + S.spacing*0.34);
   const lines=[]; let cur=[]; let curW=0; let lastGroup=-1;
 
   const flush=()=>{ if(cur.length){lines.push(cur);} cur=[]; curW=0; lastGroup=-1; };
@@ -558,9 +610,21 @@ function placeCuts(cuts,F,availW,availH,offX,offY){
         const dx = x - startX;
         k.x = x;
         k.y = y + (l.maxH - s.h)/2 + k.dyF*F + Math.tan(g.tilt)*dx;
-        k.rot = k.rotBase + g.tilt*0.75;
+        k.rot = isGrid()? 0 : k.rotBase + g.tilt*0.75;
+        // where the glyph sits inside its own cut — the one place that knows
+        if(isGrid()){
+          const gfs = s.w*GLYPH_FILL/Math.max(.1,k.metric.asc);
+          k.glyphFs = gfs;
+          k.glyphX  = (s.w - k.metric.w*gfs)/2;      // optically centred in the tile
+          k.glyphY  = (s.h + k.metric.asc*gfs)/2;
+        }else{
+          k.glyphFs = s.fs;
+          k.glyphX  = k.padL*s.fs;
+          k.glyphY  = (k.padT + k.metric.asc)*s.fs;
+        }
         // depth
-        const d = state.ink==='pure' ? 0 : state.s.shadow;
+        // butted tiles turn a full shadow into dark seams, so the grid damps it
+        const d = state.ink==='pure' ? 0 : state.s.shadow*(isGrid()? .35 : 1);
         k.sh = {a:(.10+d*.42)*(1+(k.lift>0?.35:0)), b:(3+d*16), x:(1+d*4)*Math.cos(k.rot+.6), y:(2+d*7)};
         x += (j===g.cuts.length-1)? s.w : s.w*k.overlap + F*k.gapExtra;
       });
@@ -695,7 +759,14 @@ function polyPath(poly,x,y,w,h){
   p.closePath();
   return p;
 }
-function cutPath(c,s){ return polyPath(c.poly, PAD*s, PAD*s, c.w*s, c.h*s); }
+/* Frame 0 is the cut as generated; frames 1..N-1 are the same cut re-scissored,
+   which is what gives the boil its hand-animated wobble. */
+function variantPoly(c,v){
+  if(!v) return c.poly;
+  if(isGrid()) return SQUARE;
+  return createCutoutShape(new Rng((c.seedUsed + v*7919)>>>0));
+}
+function cutPath(c,s,v){ return polyPath(variantPoly(c,v), PAD*s, PAD*s, c.w*s, c.h*s); }
 
 /* fix B7 — one scratch canvas for the whole app instead of one per cut per frame.
    ponytail: it only ever grows, so it ends up holding the largest cut of the
@@ -703,7 +774,7 @@ function cutPath(c,s){ return polyPath(c.poly, PAD*s, PAD*s, c.w*s, c.h*s); }
 const scratch = document.createElement('canvas');
 const sctx = scratch.getContext('2d');
 
-function drawInk(ctx,c,s){
+function drawInk(ctx,c,s,v){
   const P=PAD*s, w=c.w*s, h=c.h*s;
   const tw=Math.max(2,Math.ceil(w+P*2)), th=Math.max(2,Math.ceil(h+P*2));
   if(scratch.width<tw)  scratch.width  = tw;
@@ -713,10 +784,12 @@ function drawInk(ctx,c,s){
   k.globalAlpha=1; k.globalCompositeOperation='source-over'; k.filter='none';
   k.clearRect(0,0,tw,th);
 
-  const fs=c.fs*s;
+  const fs=c.glyphFs*s;
+  // the ink slips by a fraction of a pixel on each boil frame
+  const jx = v? ((v*37)%3-1)*0.6*s : 0, jy = v? ((v*53)%3-1)*0.6*s : 0;
   const setup=()=>{
     k.setTransform(1,0,0,1,0,0);
-    k.translate(P+c.padL*c.fs*s, P+(c.padT+c.metric.asc)*c.fs*s);
+    k.translate(P+c.glyphX*s+jx, P+c.glyphY*s+jy);
     k.scale(c.scaleX,1);
     k.font = c.font.w+' '+fs+'px '+c.font.f;
     k.textBaseline='alphabetic';
@@ -776,9 +849,10 @@ function drawInk(ctx,c,s){
   ctx.restore();
 }
 
-function drawCut(ctx,c,s){
+function drawCut(ctx,c,s,v){
+  v = v||0;
   const P=PAD*s, w=c.w*s, h=c.h*s;
-  const path=cutPath(c,s);
+  const path=cutPath(c,s,v);
 
   // 0 — backing card, pasted down first
   if(c.backing){
@@ -850,7 +924,7 @@ function drawCut(ctx,c,s){
   });
 
   // 5 — the letter
-  drawInk(ctx,c,s);
+  drawInk(ctx,c,s,v);
 
   // 6 — grain over everything
   paintGrain(ctx,P,P,w,h,c.grain,s);
@@ -938,6 +1012,9 @@ function render(){
   const F=fitAndPlace(state.cuts,W,H);
 
   // fix B7/B13 — reuse the existing .cut elements and their canvases
+  const frames = state.anim==='boil' ? BOIL_FRAMES : 1;
+  const doPaste = state.anim==='paste' && pastePending;
+  pastePending = false;
   const stocks=new Set();
   let i=0;
   for(const c of state.cuts){
@@ -947,31 +1024,59 @@ function render(){
     if(!el){
       el = document.createElement('div');
       el.className='cut';
-      el.appendChild(document.createElement('canvas'));
       stage.appendChild(el);
     }
-    const cv = el.firstElementChild;
     const cw=c.w+PAD*2, ch=c.h+PAD*2;
     el.dataset.key = c.key;
     el.classList.toggle('locked', !!c.locked);
+    el.classList.toggle('boil', frames>1);
     el.title = c.locked ? 'Bloccato — alt+click per sbloccare' : 'Click: ritaglia di nuovo · Alt+click: blocca';
     el.style.left=(c.x-PAD)+'px';
     el.style.top=(c.y-PAD)+'px';
     el.style.width=cw+'px';
     el.style.height=ch+'px';
     el.style.transformOrigin=(PAD+c.w/2)+'px '+(PAD+c.h/2)+'px';
-    el.style.transform='rotate('+(c.rot*180/Math.PI).toFixed(3)+'deg) skewX('+(c.skew*180/Math.PI).toFixed(3)+'deg)';
-    cv.width=Math.ceil(cw*dpr); cv.height=Math.ceil(ch*dpr);   // also clears it
-    cv.style.width=cw+'px'; cv.style.height=ch+'px';
-    drawCut(cv.getContext('2d'),c,dpr);
+    el._rot  = c.rot*180/Math.PI;
+    el._skew = c.skew*180/Math.PI;
+
+    // one canvas per animation frame, kept and resized rather than recreated
+    while(el.children.length < frames) el.appendChild(document.createElement('canvas'));
+    while(el.children.length > frames){
+      const x=el.lastElementChild; x.width=0; x.height=0; x.remove();
+    }
+    for(let v=0; v<frames; v++){
+      const cv = el.children[v];
+      cv.width=Math.ceil(cw*dpr); cv.height=Math.ceil(ch*dpr);   // also clears it
+      cv.style.width=cw+'px'; cv.style.height=ch+'px';
+      cv.classList.toggle('on', v===0);
+      drawCut(cv.getContext('2d'),c,dpr,v);
+    }
+    el._v = 0;
+
+    if(doPaste){
+      el.style.transition='none';
+      el.style.opacity='0';
+      applyTf(el,(hash2(1,i)-.5)*34,-24,(hash2(2,i)-.5)*16,.85);
+    }else{
+      el.style.transition='none';
+      el.style.opacity='1';
+      applyTf(el,0,0,0,1);
+    }
     i++;
   }
   while(stage.children.length > i){
     const ex = stage.lastElementChild;
-    const cv = ex.firstElementChild;
-    if(cv){ cv.width=0; cv.height=0; }   // release the backing store, not just the node
+    [...ex.children].forEach(cv=>{ cv.width=0; cv.height=0; });  // release the backing stores
     ex.remove();
   }
+  if(doPaste) requestAnimationFrame(()=>{
+    for(let j=0;j<stage.children.length;j++){
+      const el=stage.children[j], d=j*22;
+      el.style.transition='opacity .3s var(--ease-out) '+d+'ms, transform .44s var(--ease-out) '+d+'ms';
+      el.style.opacity='1';
+      applyTf(el,0,0,0,1);
+    }
+  });
 
   const n=i;
   const exp = exportSize();
@@ -984,6 +1089,76 @@ function render(){
   set('seedStamp', String(state.seed).padStart(6,'0'));
   set('brandStamp', state.brand||'—');
   set('lockCount', String(Object.keys(state.cutLocks).length));
+}
+
+/* =========================================================
+   12b. ANIMATION
+   Everything except the boil is a transform on the existing elements, so it
+   costs nothing per frame. The boil pre-renders BOIL_FRAMES canvases per cut
+   and cycles them — stop-motion cadence, zero drawing while it plays.
+   ========================================================= */
+const BOIL_FRAMES = 3;
+let animRaf=null, animLastFrame=-1, pastePending=false;
+
+function hash2(a,b){
+  let h=(Math.imul(a,374761393) + Math.imul(b,668265263))>>>0;
+  h=(h^(h>>>13))>>>0; h=Math.imul(h,1274126177)>>>0;
+  return ((h^(h>>>16))>>>0)/4294967296;
+}
+function applyTf(el,dx,dy,dr,sc){
+  el.style.transform =
+    'translate('+dx.toFixed(2)+'px,'+dy.toFixed(2)+'px) '+
+    'rotate('+(el._rot+dr).toFixed(3)+'deg) '+
+    'skewX('+el._skew.toFixed(3)+'deg)'+
+    (sc!==1 ? ' scale('+sc.toFixed(3)+')' : '');
+}
+
+function animTick(ts){
+  const mode=state.anim;
+  if(mode==='none'||mode==='paste'){ animRaf=null; return; }
+  animRaf=requestAnimationFrame(animTick);
+  const stage=$('stage'); if(!stage) return;
+  const kids=stage.children, amt=state.animAmt;
+
+  if(mode==='wave'){                       // continuous, so no frame gate
+    const t=ts/1000;
+    for(let i=0;i<kids.length;i++){
+      const el=kids[i];
+      applyTf(el, 0, Math.sin(t*2.2+i*.55)*amt*12, isGrid()?0:Math.cos(t*2.2+i*.55)*amt*3.5, 1);
+    }
+    return;
+  }
+
+  const frame=Math.floor(ts/1000*state.animFps);
+  if(frame===animLastFrame) return;        // hold the frame, stop-motion style
+  animLastFrame=frame;
+
+  if(mode==='boil'){
+    const v=frame%BOIL_FRAMES;
+    for(let i=0;i<kids.length;i++){
+      const el=kids[i];
+      if(el._v===v) continue;
+      el.children[el._v]?.classList.remove('on');
+      el.children[v]?.classList.add('on');
+      el._v=v;
+    }
+    return;
+  }
+  if(mode==='jitter'){
+    const snap=isGrid();                   // a grid trembles on whole pixels
+    for(let i=0;i<kids.length;i++){
+      const el=kids[i];
+      let dx=(hash2(frame,i)-.5)*amt*8, dy=(hash2(frame,i+911)-.5)*amt*8;
+      const dr=snap? 0 : (hash2(frame,i+4242)-.5)*amt*2.4;
+      if(snap){ dx=Math.round(dx); dy=Math.round(dy); }
+      applyTf(el,dx,dy,dr,1);
+    }
+  }
+}
+function syncAnim(){
+  const running = state.anim!=='none' && state.anim!=='paste';
+  if(running && !animRaf){ animLastFrame=-1; animRaf=requestAnimationFrame(animTick); }
+  if(!running && animRaf){ cancelAnimationFrame(animRaf); animRaf=null; }
 }
 
 /* fix B13 — the drag is throttled, the drop is immediate */
@@ -1055,7 +1230,7 @@ function buildSVG(){
   state.cuts.forEach((c,i)=>{
     if(c.br) return;
     families.add(c.font.f.split(',')[0].replace(/["']/g,'').trim());
-    const w=c.w, h=c.h, fs=c.fs;
+    const w=c.w, h=c.h, fs=c.glyphFs;
     const d=polyD(c.poly,0,0,w,h);
     defs.push('<clipPath id="k'+i+'"><path d="'+d+'"/></clipPath>');
 
@@ -1085,7 +1260,7 @@ function buildSVG(){
     if(c.stroke) attrs+=' stroke="'+c.stroke.c+'" stroke-width="'+(c.stroke.w*fs*2).toFixed(2)+
                         '" stroke-linejoin="round" paint-order="stroke fill"';
     g+='<g clip-path="url(#k'+i+')"><text x="'+(c.metric.left*fs).toFixed(2)+'" y="0" transform="translate('+
-       (c.padL*fs).toFixed(2)+' '+((c.padT+c.metric.asc)*fs).toFixed(2)+') scale('+c.scaleX.toFixed(4)+' 1)" '+
+       c.glyphX.toFixed(2)+' '+c.glyphY.toFixed(2)+') scale('+c.scaleX.toFixed(4)+' 1)" '+
        attrs+'>'+xmlEsc(c.text)+'</text></g>';
     g+='</g>';
     body.push(g);
@@ -1176,6 +1351,65 @@ const swatchInputs = [];
   });
 })();
 
+// --- font picker: which faces the cutter is allowed to use ---
+function activeFontCount(){ return state.fonts.reduce((n,v)=>n+(v?1:0),0); }
+function syncFontCount(){
+  const el=$('fontCount');
+  if(el) el.textContent=activeFontCount()+'/'+FONTS.length;
+}
+const fontBoxes=[];
+(function buildFontPicker(){
+  const host=$('fontList');
+  if(!host) return;
+  Object.keys(BY_GROUP).forEach(g=>{
+    const head=document.createElement('div');
+    head.className='flex justify-between items-center pt-2 first:pt-0';
+    head.innerHTML='<span class="text-[10px] text-neutral-500">'+(GROUP_LABELS[g]||g)+'</span>'+
+                   '<button type="button" class="text-[10px] text-neutral-500 hover:text-neutral-200 transition-colors" data-g="'+g+'">inverti</button>';
+    head.querySelector('button').addEventListener('click',()=>{
+      const idx=FONTS.map((f,i)=>f.g===g?i:-1).filter(i=>i>=0);
+      const allOn=idx.every(i=>state.fonts[i]);
+      idx.forEach(i=>{ state.fonts[i]=!allOn; fontBoxes[i].checked=!allOn; });
+      if(!activeFontCount()){ state.fonts[1]=true; fontBoxes[1].checked=true; toast('Serve almeno un carattere'); }
+      syncFontCount(); scheduleNow();
+    });
+    host.appendChild(head);
+
+    FONTS.forEach((f,i)=>{
+      if(f.g!==g) return;
+      const name=f.f.split(',')[0].replace(/["']/g,'').trim();
+      const row=document.createElement('label');
+      row.className='font-row';
+      row.innerHTML='<input type="checkbox" checked class="w-3.5 h-3.5 accent-neutral-200 flex-shrink-0">'+
+                    '<span class="sample"></span>';
+      const box=row.querySelector('input'), sample=row.querySelector('.sample');
+      sample.textContent=name;
+      sample.style.fontFamily=f.f;
+      sample.style.fontWeight=f.w;
+      host.appendChild(row);
+      fontBoxes[i]=box;
+      box.addEventListener('change',()=>{
+        state.fonts[i]=box.checked;
+        if(!activeFontCount()){ state.fonts[i]=true; box.checked=true; toast('Serve almeno un carattere'); return; }
+        syncFontCount(); scheduleNow();
+      });
+    });
+  });
+  syncFontCount();
+})();
+
+on('btnFontsAll','click',()=>{
+  state.fonts=FONTS.map(()=>true);
+  fontBoxes.forEach(b=>{ if(b) b.checked=true; });
+  syncFontCount(); scheduleNow();
+});
+on('btnFontsNone','click',()=>{
+  state.fonts=FONTS.map((f,i)=>i===1);   // keep one, an empty pool has nothing to cut from
+  fontBoxes.forEach((b,i)=>{ if(b) b.checked=(i===1); });
+  syncFontCount(); scheduleNow();
+  toast('Tenuto un carattere: il pool non può essere vuoto');
+});
+
 function segment(id,apply){
   const el=$(id);
   if(!el) return;
@@ -1197,6 +1431,25 @@ segment('inkSeg',v=>{
   swatchInputs.forEach(i=>{ i.disabled = v!=='colour'; });
 });
 segment('finishSeg',v=>{ state.flat = v==='flat'; });
+segment('layoutSeg',v=>{ state.layout = v; pastePending = state.anim==='paste'; });
+segment('animSeg',v=>{
+  state.anim = v;
+  pastePending = v==='paste';
+  const ctl=$('animCtl');
+  if(ctl) ctl.classList.toggle('off', v==='none');
+  // a greyed-out control must leave the tab order too
+  [$('sl-animFps'),$('sl-animAmt')].forEach(i=>{ if(i) i.disabled = v==='none'; });
+  syncAnim();
+});
+
+on('sl-animFps','input',e=>{
+  state.animFps=Math.max(1,+e.target.value);
+  const el=$('v-animFps'); if(el) el.textContent=e.target.value+' fps';
+});
+on('sl-animAmt','input',e=>{
+  state.animAmt=+e.target.value/100;
+  const el=$('v-animAmt'); if(el) el.textContent=e.target.value;
+});
 
 on('transparent','change',e=>{ state.transparent=e.target.checked; });
 
@@ -1226,6 +1479,7 @@ on('res','change',()=>{
 
 on('btnReshuffle','click',()=>{
   state.seed=createSeed();
+  pastePending = state.anim==='paste';
   // a re-rolled cut goes back in the pot; a locked one does not
   for(const k of Object.keys(state.cutSeeds)) if(!state.cutLocks[k]) delete state.cutSeeds[k];
   scheduleNow();
@@ -1309,8 +1563,28 @@ window.addEventListener('resize',schedule);
     metricCache.clear();
     state.fontsReady=true;
     $('canvasWrap')?.classList.remove('busy');
+    pastePending = state.anim==='paste';
     render();
+    syncAnim();
   };
+
+  // accessibility: never animate against the OS preference
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){
+    state.anim='none';
+    const seg=$('animSeg');
+    if(seg){
+      [...seg.children].forEach(b=>{
+        b.disabled = b.dataset.v!=='none';
+        b.setAttribute('aria-pressed', String(b.dataset.v==='none'));
+      });
+    }
+    const note=$('animNote');
+    if(note) note.textContent='Animazioni disattivate: il sistema richiede movimento ridotto.';
+    const ctl=$('animCtl'); if(ctl) ctl.classList.add('off');
+  }
+
+  [$('sl-animFps'),$('sl-animAmt')].forEach(i=>{ if(i) i.disabled = state.anim==='none'; });
 
   const SAMPLE='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   FONTS.forEach(f=>{ try{ document.fonts.load(f.w+' 100px '+f.f, SAMPLE); }catch(e){} });

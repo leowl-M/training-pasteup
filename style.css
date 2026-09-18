@@ -173,3 +173,24 @@ input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
   font-size: 11px; letter-spacing: .24em;
   z-index: 10;
 }
+
+/* --- Font picker -------------------------------------------- */
+.font-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 0; cursor: pointer;
+  color: var(--color-text-sub);
+  transition: color .2s ease;
+}
+.font-row:hover { color: var(--color-text); }
+.font-row .sample {
+  font-size: 15px; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.font-row:has(input:not(:checked)) .sample { opacity: .35; }
+
+/* --- Animation ---------------------------------------------- */
+#animCtl.off { opacity: .35; pointer-events: none; }
+
+/* stacked boil frames: only the current one is shown */
+.cut.boil canvas { position: absolute; left: 0; top: 0; display: none; }
+.cut.boil canvas.on { display: block; }
