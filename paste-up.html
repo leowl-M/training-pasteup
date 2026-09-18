@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PASTE-UP — cut-out typography collage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Alfa+Slab+One&family=Anton&family=Archivo:wght@800&family=Archivo+Black&family=Archivo+Narrow:wght@700&family=Bebas+Neue&family=Bodoni+Moda:opsz,wght@6..96,900&family=Bungee&family=Courier+Prime:wght@700&family=DM+Serif+Display&family=Fjalla+One&family=IBM+Plex+Mono:wght@400;600&family=Instrument+Serif&family=Oswald:wght@700&family=Passion+One:wght@900&family=Playfair+Display:wght@900&family=Rubik+Mono+One&family=Space+Mono:wght@700&family=Special+Elite&family=Staatliches&family=Ultra&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d0c0e;
+  --panel:#141316;
+  --panel-2:#1b1a1e;
+  --line:#2e2c31;
+  --line-soft:#232126;
+  --fg:#ece8e1;
+  --fg-dim:#8d8880;
+  --fg-faint:#5d5952;
+  --signal:#ff4d00;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --disp:"Archivo Black","Arial Black",Impact,sans-serif;
+}
+:root:not([data-theme="light"]){color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:13px;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  padding:18px 22px 14px;
+  display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px 28px;
+}
+.wordmark{
+  font-family:var(--disp);
+  font-size:clamp(28px,4.4vw,46px);
+  line-height:.86;
+  letter-spacing:-.03em;
+  margin:0;
+  text-transform:uppercase;
+}
+.wordmark em{font-style:normal;color:var(--signal)}
+.tagline{max-width:34ch;color:var(--fg-dim);line-height:1.45;margin:0}
+.masthead .stamp{
+  margin-left:auto;text-align:right;color:var(--fg-faint);
+  font-size:11px;line-height:1.7;letter-spacing:.06em;
+}
+.stamp b{display:block;color:var(--fg);font-weight:400;letter-spacing:.14em}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:326px minmax(0,1fr);align-items:start}
+.desk{border-right:1px solid var(--line);min-height:calc(100vh - 92px)}
+.field{border-bottom:1px solid var(--line-soft);padding:16px 22px}
+.field:last-child{border-bottom:0}
+.lab{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-faint);
+  margin-bottom:9px;
+}
+.lab .val{color:var(--signal);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+textarea{
+  width:100%;min-height:104px;resize:vertical;background:var(--panel);
+  border:1px solid var(--line);padding:11px 12px;line-height:1.5;
+  font-family:var(--disp);font-size:16px;letter-spacing:.01em;text-transform:uppercase;
+}
+input[type=text]{width:100%;background:var(--panel);border:1px solid var(--line);padding:9px 11px;letter-spacing:.08em;text-transform:uppercase}
+.row{display:flex;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}
+.seg button{
+  background:var(--panel);border:0;border-right:1px solid var(--line);
+  padding:9px 2px;font-size:10px;letter-spacing:.08em;cursor:pointer;color:var(--fg-dim);
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--fg);color:var(--ink)}
+.seg.two{grid-template-columns:repeat(3,1fr)}
+.seg.duo{grid-template-columns:repeat(2,1fr)}
+.chk{display:flex;gap:9px;align-items:center;color:var(--fg-dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:2px 0}
+.chk input{accent-color:var(--signal);width:14px;height:14px}
+#swatchField.off{opacity:.32;pointer-events:none}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sw{position:relative;height:46px;border:1px solid var(--line);overflow:hidden}
+.sw input{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);border:0;padding:0;background:none;cursor:pointer;opacity:0}
+.sw span{position:absolute;inset:0;pointer-events:none}
+.sw b{position:absolute;left:0;bottom:0;right:0;font-size:9px;font-weight:400;letter-spacing:.06em;background:rgba(0,0,0,.55);color:#fff;padding:2px 4px}
+.sliders{padding:4px 0}
+.slider{padding:11px 22px 12px;border-bottom:1px solid var(--line-soft)}
+.slider:last-child{border-bottom:0}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:16px;background:none;cursor:ew-resize;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);border:0}
+input[type=range]::-moz-range-track{height:2px;background:var(--line);border:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:16px;background:var(--signal);margin-top:-7px;border:0;border-radius:0}
+input[type=range]::-moz-range-thumb{width:11px;height:16px;background:var(--signal);border:0;border-radius:0}
+.actions{display:grid;gap:8px;padding:16px 22px 26px}
+.btn{
+  width:100%;padding:14px 12px;background:var(--fg);color:var(--ink);border:0;cursor:pointer;
+  font-family:var(--disp);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.btn:hover{background:var(--signal);color:#fff}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--signal);color:var(--signal);background:transparent}
+.btn small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.65}
+select{background:var(--panel);border:1px solid var(--line);padding:9px 10px;width:100%}
+
+/* ---------- stage ---------- */
+.studio{padding:26px 30px 44px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.studio-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;color:var(--fg-faint);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+.board-wrap{display:flex;justify-content:center}
+#board{
+  position:relative;width:100%;max-width:960px;overflow:hidden;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.9), 0 0 0 1px var(--line);
+}
+#boardBg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#stage{position:absolute;inset:0}
+.cut{position:absolute;will-change:transform}
+.cut canvas{display:block}
+#board.busy::after{
+  content:"SETTING TYPE";position:absolute;inset:0;display:grid;place-items:center;
+  background:rgba(13,12,14,.82);color:var(--fg);letter-spacing:.3em;font-size:11px;
+}
+.foot{color:var(--fg-faint);font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;gap:18px;flex-wrap:wrap}
+
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr}
+  .desk{border-right:0;border-bottom:1px solid var(--line);min-height:0}
+  .studio{padding:20px 16px 36px}
+  .masthead{padding:16px}
+  .masthead .stamp{margin-left:0;text-align:left;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <h1 class="wordmark">Paste<em>-</em>up</h1>
+  <p class="tagline">A letter-cutting desk. Type a line, and every character is cut from a different printed source — newsprint, glossy stock, xerox, tabloid ink.</p>
+  <div class="stamp"><b id="brandStamp">WOOZY</b>edition <span id="seedStamp">000000</span></div>
+</header>
+
+<div class="shell">
+  <!-- ============ CONTROLS ============ -->
+  <aside class="desk">
+    <div class="field">
+      <div class="lab"><span>Copy</span><span class="val" id="charCount">0 cuts</span></div>
+      <textarea id="text" spellcheck="false" aria-label="Text to compose">NEW RANSOM
+CUT-OUTS</textarea>
+    </div>
+
+    <div class="field">
+      <div class="lab"><span>Brand</span></div>
+      <input type="text" id="brand" value="WOOZY" aria-label="Brand name" maxlength="18">
+    </div>
+
+    <div class="field">
+      <div class="lab"><span>Format</span></div>
+      <div class="seg" id="formatSeg" role="group" aria-label="Artwork format">
+        <button type="button" data-v="1" aria-pressed="true">1:1</button>
+        <button type="button" data-v="0.8" aria-pressed="false">4:5</button>
+        <button type="button" data-v="0.5625" aria-pressed="false">9:16</button>
+        <button type="button" data-v="1.7778" aria-pressed="false">16:9</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="lab"><span>Surface</span></div>
+      <div class="seg two" id="surfaceSeg" role="group" aria-label="Board surface">
+        <button type="button" data-v="black" aria-pressed="true">Black board</button>
+        <button type="button" data-v="offwhite" aria-pressed="false">Off-white</button>
+        <button type="button" data-v="grey" aria-pressed="false">Recycled</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="lab"><span>Ink</span></div>
+      <div class="seg two" id="inkSeg" role="group" aria-label="Ink mode">
+        <button type="button" data-v="colour" aria-pressed="true">Full colour</button>
+        <button type="button" data-v="grey" aria-pressed="false">Greyscale</button>
+        <button type="button" data-v="pure" aria-pressed="false">Pure B/W</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="lab"><span>Finish</span></div>
+      <div class="seg duo" id="finishSeg" role="group" aria-label="Finish">
+        <button type="button" data-v="printed" aria-pressed="true">Printed</button>
+        <button type="button" data-v="flat" aria-pressed="false">Shapes only</button>
+      </div>
+    </div>
+
+    <div class="field" id="swatchField">
+      <div class="lab"><span>Stock colours</span><span class="val">brand ink</span></div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+
+    <div class="field sliders" id="sliders"></div>
+
+    <div class="actions">
+      <button class="btn" id="reshuffle" type="button">Reshuffle cuts <small>new seed</small></button>
+      <label class="chk"><input type="checkbox" id="transparent"> Transparent background on export</label>
+      <select id="res" aria-label="Export resolution">
+        <option value="2">Export at 2× resolution</option>
+        <option value="3" selected>Export at 3× resolution</option>
+        <option value="4">Export at 4× resolution</option>
+      </select>
+      <button class="btn ghost" id="download" type="button">Download artwork <small>PNG</small></button>
+      <button class="btn ghost" id="downloadSvg" type="button">Download vector <small>SVG</small></button>
+    </div>
+  </aside>
+
+  <!-- ============ STAGE ============ -->
+  <main class="studio">
+    <div class="studio-head">
+      <span id="stockLine">stock in use</span>
+      <span id="dims">—</span>
+    </div>
+    <div class="board-wrap">
+      <div id="board" class="busy">
+        <canvas id="boardBg"></canvas>
+        <div id="stage" aria-hidden="true"></div>
+        <div class="sr" id="live" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="foot">
+      <span>Drag a slider to recompose · the seed keeps the composition stable</span>
+      <span>No image assets — every cut is drawn procedurally</span>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1. SEEDED RANDOMNESS
+   ========================================================= */
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+class Rng{
+  constructor(seed){this._=mulberry32(seed>>>0);}
+  r(){return this._();}
+  range(a,b){return a+this._()*(b-a);}
+  int(a,b){return Math.floor(a+this._()*(b-a+1));}
+  pick(a){return a[Math.floor(this._()*a.length)];}
+  chance(p){return this._()<p;}
+  sign(){return this._()<.5?-1:1;}
+  /* soft bell curve: values cluster near the middle, extremes are rare */
+  bell(){return (this._()+this._()+this._())/3*2-1;}
+  weighted(pairs){ // [[value,weight],...]
+    let t=0;for(const p of pairs)t+=p[1];
+    let x=this._()*t;
+    for(const p of pairs){x-=p[1];if(x<=0)return p[0];}
+    return pairs[pairs.length-1][0];
+  }
+}
+function createSeed(){return Math.floor(Math.random()*0xFFFFFF);}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+
+/* =========================================================
+   2. COLOUR HELPERS
+   ========================================================= */
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');}
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0;const l=(mx+mn)/2;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h/=6;}
+  return [h*360,s,l];
+}
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360/360;s=Math.max(0,Math.min(1,s));l=Math.max(0,Math.min(1,l));
+  const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+  const f=t=>{t=(t+1)%1;
+    if(t<1/6)return p+(q-p)*6*t;
+    if(t<1/2)return q;
+    if(t<2/3)return p+(q-p)*(2/3-t)*6;
+    return p;};
+  return rgbToHex(f(h+1/3)*255,f(h)*255,f(h-1/3)*255);
+}
+function tweak(hex,dh,ds,dl){const[h,s,l]=rgbToHsl(...hexToRgb(hex));return hslToHex(h+dh,s*ds,l+dl);}
+function lum(hex){const[r,g,b]=hexToRgb(hex).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});
+  return .2126*r+.7152*g+.0722*b;}
+function mix(a,b,t){const A=hexToRgb(a),B=hexToRgb(b);return rgbToHex(A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);}
+
+/* =========================================================
+   3. TYPE POOL — grouped by voice, always with a system fallback
+   ========================================================= */
+const FONTS = [
+  // heavy display
+  {f:'"Anton", Impact, "Arial Narrow", sans-serif',w:400,g:'display'},
+  {f:'"Archivo Black","Arial Black",sans-serif',w:400,g:'display'},
+  {f:'"Alfa Slab One", Rockwell, Georgia, serif',w:400,g:'display'},
+  {f:'"Ultra", Georgia, serif',w:400,g:'display'},
+  {f:'"Passion One", Impact, sans-serif',w:900,g:'display'},
+  {f:'"Bungee", Impact, sans-serif',w:400,g:'display'},
+  {f:'"Rubik Mono One", "Courier New", monospace',w:400,g:'display'},
+  {f:'Impact, "Arial Black", sans-serif',w:400,g:'display'},
+  {f:'"Arial Black", Impact, sans-serif',w:900,g:'display'},
+  // condensed
+  {f:'"Bebas Neue", "Arial Narrow", sans-serif',w:400,g:'condensed'},
+  {f:'"Oswald", "Arial Narrow", sans-serif',w:700,g:'condensed'},
+  {f:'"Fjalla One", "Arial Narrow", sans-serif',w:400,g:'condensed'},
+  {f:'"Staatliches", "Arial Narrow", sans-serif',w:400,g:'condensed'},
+  {f:'"Archivo Narrow", "Arial Narrow", sans-serif',w:700,g:'condensed'},
+  // editorial serif
+  {f:'"Playfair Display", Georgia, serif',w:900,g:'serif'},
+  {f:'"Bodoni Moda", "Didot", Georgia, serif',w:900,g:'serif'},
+  {f:'"DM Serif Display", Georgia, serif',w:400,g:'serif'},
+  {f:'"Abril Fatface", Georgia, serif',w:400,g:'serif'},
+  {f:'"Instrument Serif", Georgia, serif',w:400,g:'serif'},
+  {f:'Georgia, "Times New Roman", serif',w:700,g:'serif'},
+  {f:'"Times New Roman", Times, serif',w:700,g:'serif'},
+  {f:'Palatino, "Palatino Linotype", Georgia, serif',w:700,g:'serif'},
+  // typewriter / mono
+  {f:'"Special Elite", "Courier New", monospace',w:400,g:'mono'},
+  {f:'"Courier Prime", "Courier New", monospace',w:700,g:'mono'},
+  {f:'"Space Mono", "Courier New", monospace',w:700,g:'mono'},
+  {f:'"Courier New", Courier, monospace',w:700,g:'mono'},
+  // grotesk
+  {f:'"Archivo", Helvetica, Arial, sans-serif',w:800,g:'grotesk'},
+  {f:'Helvetica, Arial, sans-serif',w:700,g:'grotesk'},
+  {f:'"Trebuchet MS", Verdana, sans-serif',w:700,g:'grotesk'},
+  {f:'Verdana, Geneva, sans-serif',w:700,g:'grotesk'}
+];
+const BY_GROUP = FONTS.reduce((m,f)=>((m[f.g]=m[f.g]||[]).push(f),m),{});
+
+/* =========================================================
+   4. MATERIAL PRESETS — a cut gets a preset first, variations second
+   ========================================================= */
+const MATERIALS = {
+  newspaper:{
+    label:'newsprint', groups:['serif','mono','condensed'], weight:16,
+    stocks:[['newsprint',6],['neutral',2],['brand',1]],
+    sat:.34, screen:[.30,.58], paperDots:[.05,.12], grain:[.55,.85],
+    pad:[.025,.095], ink:'dark', bleed:.5, fiber:.9, edge:[.10,.20], crisp:.55
+  },
+  magazine:{
+    label:'glossy', groups:['display','grotesk','condensed','serif'], weight:26,
+    stocks:[['brand',3],['bright',4],['neutral',3]],
+    sat:1.05, screen:[.10,.32], paperDots:[0,.06], grain:[.12,.3],
+    pad:[.02,.10], ink:'auto', bleed:.18, fiber:.15, edge:[.05,.12], crisp:.9
+  },
+  xerox:{
+    label:'xerox', groups:['display','condensed','mono'], weight:14,
+    stocks:[['xerox',7],['dark',2],['brand',1]],
+    sat:.06, screen:[.35,.6], paperDots:[.03,.09], grain:[.8,1.25],
+    pad:[.02,.085], ink:'hard', bleed:.7, fiber:.4, edge:[.12,.24], crisp:.35
+  },
+  fashion:{
+    label:'coated', groups:['serif','display'], weight:18,
+    stocks:[['brand',3],['bright',4],['dark',3]],
+    sat:.95, screen:[.05,.18], paperDots:[0,.04], grain:[.08,.22],
+    pad:[.07,.21], ink:'auto', bleed:.1, fiber:.1, edge:[.04,.10], crisp:1
+  },
+  tabloid:{
+    label:'tabloid', groups:['condensed','display'], weight:26,
+    stocks:[['brand',5],['accent',2],['neutral',2],['dark',1]],
+    sat:1.25, screen:[.22,.48], paperDots:[.04,.11], grain:[.35,.6],
+    pad:[.012,.07], ink:'auto', bleed:.35, fiber:.35, edge:[.08,.18], crisp:.7
+  }
+};
+const MAT_KEYS = Object.keys(MATERIALS);
+const MAT_WEIGHTS = MAT_KEYS.map(k=>[k,MATERIALS[k].weight]);
+
+const STOCKS = {
+  newsprint:['#d9d2c2','#cfc8b6','#e1dbcb','#c8c1af'],
+  neutral:['#e9e3d5','#ded7c7','#f1ece0','#d2ccbd','#efe7d3'],
+  bright:['#f7f5f0','#ffffff','#f4f1e8','#fbf9f4'],
+  xerox:['#f4f3ef','#e8e7e2','#fbfaf7'],
+  dark:['#141317','#1d1b20','#0f0e11','#221f24']
+};
+
+/* =========================================================
+   5. STATE
+   ========================================================= */
+const SLIDERS = [
+  {id:'chaos',      label:'Disorder',           v:55},
+  {id:'sizeVar',    label:'Letter size variation', v:45},
+  {id:'rotation',   label:'Rotation',           v:50},
+  {id:'aging',      label:'Paper aging',        v:40},
+  {id:'print',      label:'Print imperfection', v:52},
+  {id:'spacing',    label:'Letter spacing',     v:45},
+  {id:'leading',    label:'Leading',            v:46},
+  {id:'shadow',     label:'Shadow depth',       v:58},
+  {id:'intensity',  label:'Colour intensity',   v:66}
+];
+const state = {
+  text:'NEW RANSOM\nCUT-OUTS',
+  brand:'WOOZY',
+  seed:createSeed(),
+  format:1,
+  surface:'black',
+  palette:['#e0392b','#6e9cc4','#e8873a','#f3d42f'],
+  ink:'colour', flat:false, transparent:false,
+  s:Object.fromEntries(SLIDERS.map(s=>[s.id,s.v/100])),
+  cuts:[], fontsReady:false
+};
+const PAD = 30;           // shadow + backing-card breathing room baked into every cut canvas
+const REF = 100;          // metrics reference size
+
+/* =========================================================
+   6. MEASURING
+   ========================================================= */
+const mc = document.createElement('canvas').getContext('2d');
+const metricCache = new Map();
+function metrics(str,font){
+  const key = font.w+'|'+font.f+'|'+str;
+  let m = metricCache.get(key);
+  if(m) return m;
+  mc.font = font.w+' '+REF+'px '+font.f;
+  const t = mc.measureText(str);
+  const left  = t.actualBoundingBoxLeft  !== undefined ? t.actualBoundingBoxLeft  : 0;
+  const right = t.actualBoundingBoxRight !== undefined ? t.actualBoundingBoxRight : t.width;
+  const asc   = t.actualBoundingBoxAscent  || REF*.72;
+  const desc  = Math.max(0, t.actualBoundingBoxDescent || 0);
+  m = {w:(left+right)/REF||t.width/REF, left:left/REF, asc:asc/REF, desc:desc/REF};
+  metricCache.set(key,m);
+  return m;
+}
+
+/* =========================================================
+   7. STYLE GENERATION — one cut = one fragment of printed matter
+   ========================================================= */
+function paletteFor(kind,rng,intensity){
+  if(kind==='brand'||kind==='accent'){
+    const base = rng.pick(state.palette);
+    const [h,s,l] = rgbToHsl(...hexToRgb(base));
+    const boost = .55 + intensity*.75;
+    if(kind==='accent') return hslToHex(h + rng.range(-16,16), Math.min(1,s*boost*1.05), Math.min(.82,Math.max(.22,l+rng.range(-.12,.12))));
+    return hslToHex(h + rng.range(-7,7), Math.min(1,s*boost), Math.max(.18,Math.min(.8,l+rng.range(-.08,.08))));
+  }
+  return rng.pick(STOCKS[kind]);
+}
+
+/* black & white conversion — stocks become distinct paper greys, ink goes hard */
+const GREYS=[1,.955,.90,.83,.72,.58,.20,.11,.055];
+function toGrey(hex,shift){
+  let L=lum(hex);
+  L=Math.max(0,Math.min(1,(L-.5)*1.18+.5+(shift||0)));
+  let best=GREYS[0],d=9;
+  for(const g of GREYS){const k=Math.abs(g-L);if(k<d){d=k;best=g;}}
+  return hslToHex(0,0,best);
+}
+function monoize(c){
+  if(state.ink==='pure'){
+    // two inks only, no halfway house
+    const white = (c.fiberSeed%100) < 55;
+    c.paper = white ? '#ffffff' : '#000000';
+    c.ink   = white ? '#000000' : '#ffffff';
+    if(c.backing) c.backing.color = white ? '#000000' : '#ffffff';
+    c.stroke = null; c.ghost = null;
+    return c;
+  }
+  c.paper=toGrey(c.paper);
+  const pale=lum(c.paper)>.45;
+  c.ink = pale ? '#0b0a0c' : '#f8f7f4';
+  if(c.stroke) c.stroke.c = pale ? '#f8f7f4' : '#0b0a0c';
+  if(c.ghost)  c.ghost.c  = c.ink;
+  if(c.backing) c.backing.color = toGrey(c.backing.color, pale? -.30 : .34);
+  return c;
+}
+
+/* shapes only: the cut silhouette and the letterform, nothing else */
+const isFlat = () => state.flat || state.ink==='pure';
+function flatten(c){
+  c.grain=0; c.fiber=0; c.screen=0; c.erode=0; c.blur=0; c.ghost=null;
+  c.paperDots.a=0; c.papLight=0; c.papDark=0; c.lift=0; c.inkAlpha=1;
+  c.edge = state.ink==='pure' ? 0 : c.edge*0.35;
+  return c;
+}
+
+/* the board colour once ink mode has had its say */
+function boardBase(){
+  if(state.ink==='pure') return state.surface==='black' ? '#000000' : '#ffffff';
+  const b=SURFACES[state.surface].base;
+  return state.ink==='grey' ? toGrey(b) : b;
+}
+
+function pickInk(mat,paper,rng,intensity){
+  const L = lum(paper);
+  const dark  = ['#14121a','#1a1713','#100f12','#231d1a'];
+  const light = ['#f6f2e6','#fffdf6','#ece5d2','#f2ece0'];
+  if(mat.ink==='dark')  return L>.4 ? rng.pick(dark) : rng.pick(light);
+  if(mat.ink==='hard')  return L>.45 ? '#0c0b0e' : '#f8f7f3';
+  // auto: sometimes brand-coloured ink on pale stock
+  if(L>.55 && rng.chance(.34)){
+    const c = paletteFor(rng.chance(.7)?'brand':'accent',rng,intensity);
+    return lum(c) < L-.28 ? c : tweak(c,0,1.05,-.18);
+  }
+  if(L<.30 && rng.chance(.3)){
+    const c = paletteFor('brand',rng,intensity);
+    return lum(c) > L+.3 ? c : tweak(c,0,1,.25);
+  }
+  return L>.42 ? rng.pick(dark) : rng.pick(light);
+}
+
+/* hand-cut silhouette: mostly straight edges, tiny wobble, the odd nick */
+function createCutoutShape(rng){
+  const pts=[];
+  const corners=[[0,0],[1,0],[1,1],[0,1]];
+  for(let s=0;s<4;s++){
+    const a=corners[s], b=corners[(s+1)%4];
+    const n=rng.int(3,5);
+    const horiz = s===0||s===2;
+    for(let i=0;i<n;i++){
+      const t=i/n;
+      let x=a[0]+(b[0]-a[0])*t, y=a[1]+(b[1]-a[1])*t;
+      let j=rng.bell()*0.023;
+      if(rng.chance(.12)) j += rng.sign()*rng.range(.022,.05); // scissor nick
+      if(horiz) y += (s===0? j : -j); else x += (s===1? -j : j);
+      // corners drift a touch more
+      if(i===0){ x+= rng.bell()*.012; y+= rng.bell()*.012; }
+      pts.push([x,y]);
+    }
+  }
+  return pts;
+}
+
+function createCharacterStyle(str,rng,ctxOpts){
+  const matKey = ctxOpts.material;
+  const mat = MATERIALS[matKey];
+  const S = state.s;
+  const groups = mat.groups;
+  const font = rng.pick(BY_GROUP[rng.pick(groups)]);
+  const m = metrics(str,font);
+
+  const stockKind = rng.weighted(mat.stocks);
+  let paper = paletteFor(stockKind,rng,S.intensity);
+  // aging pushes paper warm + dull
+  const age = S.aging;
+  if(lum(paper)>.25) paper = tweak(paper, -2*age, 1-.16*age, -.05*age);
+  // global saturation direction per material
+  paper = tweak(paper,0,mat.sat*(.7+S.intensity*.55),0);
+
+  const ink = pickInk(mat,paper,rng,S.intensity);
+
+  let sizeMul = 1 + rng.bell()*(.10+S.sizeVar*.34);
+  if(ctxOpts.block) sizeMul *= rng.range(.42,.62);  // a small clipping, not a headline
+  if(rng.chance(.16+S.sizeVar*.12)) sizeMul *= rng.range(1.14,1.42);   // a headline letter
+  else if(rng.chance(.14)) sizeMul *= rng.range(.70,.86);              // a body-copy letter
+  const scaleX  = 1 + rng.bell()*(.05+S.chaos*.13);
+  const padBase = rng.range(mat.pad[0],mat.pad[1]);
+
+  const pr = S.print;
+  const dotsA = rng.range(mat.paperDots[0],mat.paperDots[1])*(.6+pr*.9);
+  const screen = rng.range(mat.screen[0],mat.screen[1])*(.45+pr*1.0);
+
+  // asymmetric margins; now and then the scissors bite into the glyph itself
+  const pads = {
+    padL: padBase*rng.range(.6,1.6), padR: padBase*rng.range(.6,1.6),
+    padT: padBase*rng.range(.45,1.4), padB: padBase*rng.range(.45,1.4)
+  };
+  if(rng.chance(.22)){
+    const side = rng.pick(['padL','padR','padT','padB']);
+    pads[side] = -rng.range(.008,.045);
+  }
+
+  // one cut in six is pasted onto a second, larger card
+  const backing = rng.chance(.17)
+    ? (()=>{ const bc = rng.chance(.55) ? paletteFor(rng.chance(.6)?'brand':'accent',rng,S.intensity)
+                                       : (lum(paper)>.45 ? '#16141a' : rng.pick(STOCKS.neutral));
+             return {color:bc, grow:rng.range(.06,.17), dx:rng.bell()*.05, dy:rng.bell()*.05,
+                     rot:rng.bell()*.07, poly:createCutoutShape(rng)}; })()
+    : null;
+
+  const style = {
+    text:str, material:matKey, font, metric:m,
+    paper, ink, stockKind, backing,
+    sizeMul, scaleX,
+    skew: rng.bell()*(1.2+S.chaos*1.6)*Math.PI/180,
+    rot:  0, // filled by layout
+    padL:pads.padL, padR:pads.padR, padT:pads.padT, padB:pads.padB,
+    poly: createCutoutShape(rng),
+    // print behaviour
+    inkAlpha: 1 - rng.range(0,.10)*pr*(mat.crisp<.6?1.4:.6),
+    blur: rng.chance(.45)? rng.range(.05,.42)*pr*(1.4-mat.crisp) : 0,
+    ghost: rng.chance(.34*pr+.06)
+      ? {dx:rng.bell()*1.9*(1+pr), dy:rng.bell()*1.6*(1+pr), a:rng.range(.10,.34)*pr+.05,
+         c: rng.chance(.4)? paletteFor('accent',rng,S.intensity) : ink}
+      : null,
+    screen: rng.chance(.55)? screen : screen*.25,
+    screenSp: rng.range(3.2,6.4),
+    screenAng: rng.range(0,Math.PI),
+    paperDots:{a:dotsA, sp:rng.range(3.4,7), ang:rng.range(0,Math.PI)},
+    erode: rng.range(0,1)*pr*(mat.bleed+.25),
+    grain: rng.range(mat.grain[0],mat.grain[1])*(.45+S.aging*.75+pr*.25),
+    fiber: mat.fiber*(.5+S.aging),
+    edge: rng.range(mat.edge[0],mat.edge[1])*(.6+S.aging*.9),
+    lift: rng.range(0,1)<.45 ? rng.range(.05,.16)*(.4+S.shadow) : 0,
+    liftSide: rng.int(0,3),
+    papLight: rng.range(.02,.10),
+    papDark: rng.range(.03,.12)*(.5+S.aging),
+    stroke: rng.chance(.13)
+      ? {c: lum(ink)>.5 ? '#141218' : (rng.chance(.5)? '#f6f1e4' : paletteFor('brand',rng,S.intensity)),
+         w: rng.range(.035,.085), inline: rng.chance(.35)}
+      : null,
+    sh:{a:0,b:0,x:0,y:0},
+    fiberSeed: rng.int(0,99999)
+  };
+  let out = style;
+  if(state.ink!=='colour') out = monoize(out);
+  if(isFlat()) out = flatten(out);
+  return out;
+}
+
+/* =========================================================
+   8. BUILDING THE COMPOSITION
+   ========================================================= */
+function buildCuts(){
+  const rng = new Rng(state.seed ^ hashStr(state.text));
+  const S = state.s;
+  const lines = state.text.replace(/\r/g,'').split('\n');
+  const out = [];
+  let wordIndex = 0;
+
+  lines.forEach((line,li)=>{
+    const words = line.split(/\s+/).filter(Boolean);
+    words.forEach(word=>{
+      // a word can occasionally be one single cut — a whole word clipped from a headline
+      const material = rng.weighted(MAT_WEIGHTS);
+      const asBlock = word.length<=4 && word.length>1 && rng.chance(.13);
+      const group = {index:wordIndex++, line:li, cuts:[], material,
+                     tilt: rng.bell()*(2.2+S.chaos*5.5)*Math.PI/180,
+                     scale: 1 + rng.bell()*(.04+S.sizeVar*.12)};
+      if(asBlock){
+        const c = createCharacterStyle(word,rng,{material,block:true});
+        c.group = group; group.cuts.push(c); out.push(c);
+      }else{
+        for(let ch of word){
+          // 70% of a word shares its stock source, the rest is cut from elsewhere
+          const mk = rng.chance(.7)? material : rng.weighted(MAT_WEIGHTS);
+          // no cutter finds the case they wanted — flip a few
+          if(rng.chance(.05+S.chaos*.11)){
+            const alt = ch===ch.toUpperCase()? ch.toLowerCase() : ch.toUpperCase();
+            if(alt!==ch) ch=alt;
+          }
+          const c = createCharacterStyle(ch,rng,{material:mk});
+          c.group = group; group.cuts.push(c); out.push(c);
+        }
+      }
+    });
+    if(li<lines.length-1) out.push({br:true,line:li});
+  });
+
+  // per-cut randomness that layout needs
+  const r2 = new Rng((state.seed*7919 ^ hashStr(state.text))>>>0);
+  out.forEach(c=>{
+    if(c.br) return;
+    c.rotBase = r2.bell()*(4+S.rotation*9)*Math.PI/180
+              + (r2.chance(.09)? r2.sign()*r2.range(4,7)*Math.PI/180 : 0);
+    c.dyF = r2.bell()*(.03+S.chaos*.19);
+    c.overlap = 1 - r2.range(.02,.09) - S.chaos*r2.range(0,.09) + S.spacing*.06;
+    c.gapExtra = r2.range(-.05,.035)+S.spacing*.09;
+  });
+  return out;
+}
+
+/* ---- pure geometry: no drawing, so the fit loop is cheap ---- */
+function sizeOf(c,F){
+  const fs = F*c.sizeMul*(c.group?c.group.scale:1);
+  const w = (c.metric.w*c.scaleX + c.padL + c.padR)*fs;
+  const h = (c.metric.asc + c.metric.desc + c.padT + c.padB)*fs;
+  return {fs,w,h};
+}
+
+function LEAD(){ return 0.50 + state.s.leading*0.95; }
+
+function layout(cuts,F,availW,availH){
+  const S = state.s;
+  const wordGap = F*(0.20 + S.spacing*0.34);
+  const lines=[]; let cur=[]; let curW=0; let lastGroup=-1;
+
+  const flush=()=>{ if(cur.length){lines.push(cur);} cur=[]; curW=0; lastGroup=-1; };
+
+  for(const c of cuts){
+    if(c.br){ flush(); continue; }
+    if(c.group.index!==lastGroup){
+      // measure the whole word before committing it to this line
+      const word = c.group.cuts;
+      let wW=0;
+      word.forEach((k,i)=>{
+        const s=sizeOf(k,F);
+        wW += (i===word.length-1)? s.w : s.w*k.overlap + F*k.gapExtra;
+      });
+      if(cur.length && curW + wordGap + wW > availW){ flush(); }
+      if(cur.length) curW += wordGap;
+      c.group._x = curW;
+      curW += wW;
+      lastGroup = c.group.index;
+      cur.push(c.group);
+    }
+  }
+  flush();
+
+  // vertical rhythm
+  const lineData = lines.map(groups=>{
+    let maxH=0,w=0;
+    groups.forEach((g,i)=>{
+      let gw=0;
+      g.cuts.forEach((k,j)=>{
+        const s=sizeOf(k,F);
+        maxH=Math.max(maxH,s.h);
+        gw += (j===g.cuts.length-1)? s.w : s.w*k.overlap + F*k.gapExtra;
+      });
+      g._w=gw;
+      w += gw + (i? wordGap:0);
+    });
+    return {groups,maxH,w};
+  });
+
+  const leadFactor = LEAD();
+  let totalH = 0;
+  lineData.forEach((l,i)=> totalH += (i? l.maxH*leadFactor : l.maxH));
+  const maxLineW = lineData.reduce((m,l)=>Math.max(m,l.w),0);
+
+  return {lineData,totalH,maxLineW,wordGap};
+}
+
+function placeCuts(cuts,F,availW,availH,offX,offY){
+  const L = layout(cuts,F,availW,availH);
+  let y = offY + (availH - L.totalH)/2;
+  L.lineData.forEach((l,li)=>{
+    if(li) y += l.maxH*LEAD();
+    let x = offX + (availW - l.w)/2;
+    l.groups.forEach((g,gi)=>{
+      if(gi) x += L.wordGap;
+      const startX = x;
+      g.cuts.forEach((k,j)=>{
+        const s = sizeOf(k,F);
+        k.fs = s.fs; k.w = s.w; k.h = s.h;
+        const dx = x - startX;
+        k.x = x;
+        k.y = y + (l.maxH - s.h)/2 + k.dyF*F + Math.tan(g.tilt)*dx;
+        k.rot = k.rotBase + g.tilt*0.75;
+        // depth
+        const d = state.ink==='pure' ? 0 : state.s.shadow;
+        k.sh = {a:(.10+d*.42)*(1+(k.lift>0?.35:0)), b:(3+d*16), x:(1+d*4)*Math.cos(k.rot+.6), y:(2+d*7)};
+        x += (j===g.cuts.length-1)? s.w : s.w*k.overlap + F*k.gapExtra;
+      });
+    });
+  });
+  return L;
+}
+
+/* real bounds, rotation and skew included, so nothing ever runs off the board */
+function bboxOf(cuts){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,any=false;
+  for(const c of cuts){
+    if(c.br) continue;
+    any=true;
+    const cx=c.x+c.w/2, cy=c.y+c.h/2, t=Math.tan(c.skew);
+    const co=Math.cos(c.rot), si=Math.sin(c.rot);
+    for(const sx of [-1,1]) for(const sy of [-1,1]){
+      const lx=sx*c.w/2, ly=sy*c.h/2;
+      const kx=lx+t*ly, ky=ly;
+      const px=cx+kx*co-ky*si, py=cy+kx*si+ky*co;
+      x0=Math.min(x0,px);x1=Math.max(x1,px);
+      y0=Math.min(y0,py);y1=Math.max(y1,py);
+    }
+  }
+  if(!any) return {x:0,y:0,w:0,h:0};
+  return {x:x0,y:y0,w:x1-x0,h:y1-y0};
+}
+
+function fitAndPlace(cuts,boxW,boxH){
+  const availW = boxW*0.84, availH = boxH*0.80;
+  let F = Math.min(availH*0.7, availW*0.5);
+  let L = layout(cuts,F,availW,availH);
+  let guard=0;
+  while(guard++<120 && (L.maxLineW>availW || L.totalH>availH)){
+    const k = Math.min(availW/Math.max(1,L.maxLineW), availH/Math.max(1,L.totalH));
+    F = F*Math.max(.55,Math.min(.97,k*0.99));
+    if(F<8) break;
+    L = layout(cuts,F,availW,availH);
+  }
+  // grow back if there's slack
+  guard=0;
+  while(guard++<40){
+    const test = F*1.05;
+    const T = layout(cuts,test,availW,availH);
+    if(T.maxLineW<=availW && T.totalH<=availH){F=test;}
+    else break;
+  }
+  // place, then verify the true rotated bounds and shrink if anything pokes out
+  let tries=0, bb;
+  do{
+    placeCuts(cuts,F,availW,availH,(boxW-availW)/2,(boxH-availH)/2);
+    bb = bboxOf(cuts);
+    const k = Math.min(boxW*0.93/Math.max(1,bb.w), boxH*0.90/Math.max(1,bb.h), 1);
+    if(k>0.99) break;
+    F *= Math.max(.6,k);
+  }while(tries++<5);
+
+  // optical centring on the real silhouette
+  const dx=(boxW-bb.w)/2-bb.x, dy=(boxH-bb.h)/2-bb.y;
+  for(const c of cuts){ if(!c.br){ c.x+=dx; c.y+=dy; } }
+  return F;
+}
+
+/* =========================================================
+   9. TEXTURE PRIMITIVES
+   ========================================================= */
+const patternCache = new Map();
+function dotPattern(ctx,sp,r,color){
+  const key = sp.toFixed(2)+'|'+r.toFixed(2)+'|'+color;
+  let p = patternCache.get(key);
+  if(p) return p;
+  const t = document.createElement('canvas');
+  const size = Math.max(2,Math.round(sp));
+  t.width=t.height=size;
+  const tc=t.getContext('2d');
+  tc.fillStyle=color;tc.beginPath();tc.arc(size/2,size/2,Math.max(.4,r),0,6.2832);tc.fill();
+  p = ctx.createPattern(t,'repeat');
+  patternCache.set(key,p);
+  return p;
+}
+function paintDots(ctx,x,y,w,h,{sp,r,color,alpha,angle,comp}){
+  if(alpha<=0.004) return;
+  const d = Math.hypot(w,h)*1.2;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if(comp) ctx.globalCompositeOperation = comp;
+  ctx.translate(x+w/2,y+h/2);
+  ctx.rotate(angle);
+  ctx.fillStyle = dotPattern(ctx,sp,r,color);
+  ctx.fillRect(-d/2,-d/2,d,d);
+  ctx.restore();
+}
+let grainTile=null;
+function grainPattern(ctx){
+  if(!grainTile){
+    const t=document.createElement('canvas');t.width=t.height=140;
+    const tc=t.getContext('2d');const im=tc.createImageData(140,140);
+    for(let i=0;i<im.data.length;i+=4){
+      const v=Math.random();
+      const g=v<.5? 0:255;
+      im.data[i]=im.data[i+1]=im.data[i+2]=g;
+      im.data[i+3]=Math.random()*90;
+    }
+    tc.putImageData(im,0,0);
+    grainTile=t;
+  }
+  return ctx.createPattern(grainTile,'repeat');
+}
+function paintGrain(ctx,x,y,w,h,amount,s){
+  if(amount<=.02) return;
+  ctx.save();
+  ctx.globalAlpha=Math.min(.42,amount*.24);
+  ctx.globalCompositeOperation='overlay';
+  const p=grainPattern(ctx);
+  try{ p.setTransform(new DOMMatrix().scale(Math.max(1,s*.8))); }catch(e){}
+  ctx.fillStyle=p;
+  ctx.fillRect(x,y,w,h);
+  ctx.restore();
+}
+
+/* =========================================================
+   10. DRAWING ONE CUT
+   ========================================================= */
+function polyPath(poly,x,y,w,h){
+  const p=new Path2D();
+  poly.forEach((pt,i)=>{
+    const X=x+pt[0]*w, Y=y+pt[1]*h;
+    i? p.lineTo(X,Y) : p.moveTo(X,Y);
+  });
+  p.closePath();
+  return p;
+}
+function cutPath(c,s){ return polyPath(c.poly, PAD*s, PAD*s, c.w*s, c.h*s); }
+
+function drawInk(ctx,c,s){
+  const P=PAD*s, w=c.w*s, h=c.h*s;
+  const t=document.createElement('canvas');
+  t.width=Math.max(2,Math.ceil(w+P*2)); t.height=Math.max(2,Math.ceil(h+P*2));
+  const k=t.getContext('2d');
+  const fs=c.fs*s;
+  const setup=()=>{
+    k.setTransform(1,0,0,1,0,0);
+    k.translate(P+c.padL*c.fs*s, P+(c.padT+c.metric.asc)*c.fs*s);
+    k.scale(c.scaleX,1);
+    k.font = c.font.w+' '+fs+'px '+c.font.f;
+    k.textBaseline='alphabetic';
+  };
+  const tx = c.metric.left*fs;
+
+  // misregistered ghost pass
+  if(c.ghost){
+    setup();
+    k.globalAlpha=c.ghost.a; k.fillStyle=c.ghost.c;
+    k.fillText(c.text, tx + c.ghost.dx*s, c.ghost.dy*s);
+    k.globalAlpha=1;
+  }
+  // main ink
+  setup();
+  if(c.stroke && c.stroke.inline){
+    k.fillStyle = mix(c.paper,c.ink,.10);
+    k.fillText(c.text,tx,0);
+    k.lineWidth = c.stroke.w*fs; k.strokeStyle=c.ink; k.lineJoin='round';
+    k.strokeText(c.text,tx,0);
+  }else{
+    if(c.stroke){
+      k.lineWidth=c.stroke.w*fs*2; k.strokeStyle=c.stroke.c; k.lineJoin='round';
+      k.strokeText(c.text,tx,0);
+    }
+    k.fillStyle=c.ink;
+    k.fillText(c.text,tx,0);
+  }
+
+  // halftone screen inside the ink only
+  if(c.screen>.04){
+    k.setTransform(1,0,0,1,0,0);
+    k.globalCompositeOperation='destination-out';
+    paintDots(k,P,P,w,h,{sp:c.screenSp*s, r:c.screenSp*s*0.22, color:'#000',
+      alpha:Math.min(.55,c.screen*.8), angle:c.screenAng});
+    k.globalCompositeOperation='source-over';
+  }
+  // worn ink: a few bitten-out specks
+  if(c.erode>.12){
+    k.setTransform(1,0,0,1,0,0);
+    k.globalCompositeOperation='destination-out';
+    const r=new Rng(c.fiberSeed);
+    const n=Math.round(c.erode*26);
+    for(let i=0;i<n;i++){
+      k.globalAlpha=r.range(.15,.6);
+      k.beginPath();
+      k.ellipse(P+r.r()*w, P+r.r()*h, r.range(.4,2.2)*s, r.range(.4,1.8)*s, r.r()*3.14,0,6.2832);
+      k.fill();
+    }
+    k.globalAlpha=1;k.globalCompositeOperation='source-over';
+  }
+
+  ctx.save();
+  ctx.globalAlpha=c.inkAlpha;
+  if(c.blur>0.02) ctx.filter='blur('+(c.blur*s).toFixed(2)+'px)';
+  ctx.drawImage(t,0,0);
+  ctx.restore();
+}
+
+function drawCut(ctx,c,s){
+  const P=PAD*s, w=c.w*s, h=c.h*s;
+  const path=cutPath(c,s);
+
+  // 0 — backing card, pasted down first
+  if(c.backing){
+    const b=c.backing;
+    const bw=w*(1+b.grow), bh=h*(1+b.grow);
+    const bx=P+b.dx*w-(bw-w)/2, by=P+b.dy*h-(bh-h)/2;
+    ctx.save();
+    ctx.translate(P+w/2,P+h/2); ctx.rotate(b.rot); ctx.translate(-(P+w/2),-(P+h/2));
+    const bp=polyPath(b.poly,bx,by,bw,bh);
+    if(c.sh.a>0.005){
+      ctx.shadowColor='rgba(8,6,10,'+(c.sh.a*.8).toFixed(3)+')';
+      ctx.shadowBlur=c.sh.b*s*.9; ctx.shadowOffsetX=c.sh.x*s; ctx.shadowOffsetY=c.sh.y*s;
+    }
+    ctx.fillStyle=b.color; ctx.fill(bp);
+    ctx.shadowColor='transparent';
+    ctx.save(); ctx.clip(bp);
+    paintDots(ctx,bx,by,bw,bh,{sp:c.paperDots.sp*s,r:c.paperDots.sp*s*.24,
+      color:lum(b.color)>.4?'#2a2018':'#e6dfd0',alpha:c.paperDots.a*.8,angle:c.paperDots.ang+.4,comp:'multiply'});
+    paintGrain(ctx,bx,by,bw,bh,c.grain*.75,s);
+    ctx.restore();
+    ctx.lineWidth=Math.max(1,1.5*s);
+    ctx.strokeStyle='rgba(24,18,12,'+(c.edge*.8).toFixed(3)+')';
+    ctx.stroke(bp);
+    ctx.restore();
+  }
+
+  // 1 — paper body + drop shadow
+  ctx.save();
+  if(c.sh.a>0.005){
+    ctx.shadowColor='rgba(8,6,10,'+c.sh.a.toFixed(3)+')';
+    ctx.shadowBlur=c.sh.b*s; ctx.shadowOffsetX=c.sh.x*s; ctx.shadowOffsetY=c.sh.y*s;
+  }
+  ctx.fillStyle=c.paper; ctx.fill(path);
+  ctx.restore();
+
+  ctx.save();
+  ctx.clip(path);
+
+  // 2 — stock shading
+  const g=ctx.createLinearGradient(P,P,P+w,P+h);
+  g.addColorStop(0,'rgba(255,255,255,'+c.papLight.toFixed(3)+')');
+  g.addColorStop(.55,'rgba(255,255,255,0)');
+  g.addColorStop(1,'rgba(0,0,0,'+c.papDark.toFixed(3)+')');
+  ctx.fillStyle=g; ctx.fillRect(P,P,w,h);
+
+  // 3 — fibres
+  if(c.fiber>.12){
+    const r=new Rng(c.fiberSeed+11);
+    ctx.save();
+    ctx.globalAlpha=Math.min(.14,c.fiber*.09);
+    ctx.strokeStyle= lum(c.paper)>.4 ? '#4a4034' : '#cfc6b4';
+    ctx.lineWidth=Math.max(.5,.7*s);
+    const n=Math.round(10+c.fiber*22);
+    for(let i=0;i<n;i++){
+      const y0=P+r.r()*h, x0=P+r.r()*w, len=r.range(.08,.4)*w;
+      ctx.beginPath();
+      ctx.moveTo(x0,y0);
+      ctx.lineTo(x0+len,y0+r.bell()*2.5*s);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 4 — stock printing screen
+  paintDots(ctx,P,P,w,h,{
+    sp:c.paperDots.sp*s, r:c.paperDots.sp*s*.24,
+    color: lum(c.paper)>.4? '#2a2018':'#e6dfd0',
+    alpha:c.paperDots.a, angle:c.paperDots.ang, comp:'multiply'
+  });
+
+  // 5 — the letter
+  drawInk(ctx,c,s);
+
+  // 6 — grain over everything
+  paintGrain(ctx,P,P,w,h,c.grain,s);
+
+  // 7 — lifted corner shading
+  if(c.lift>0){
+    const dirs=[[0,-1],[1,0],[0,1],[-1,0]][c.liftSide];
+    const gx=ctx.createLinearGradient(
+      P+w/2 - dirs[0]*w/2, P+h/2 - dirs[1]*h/2,
+      P+w/2 + dirs[0]*w/2, P+h/2 + dirs[1]*h/2);
+    gx.addColorStop(0,'rgba(0,0,0,0)');
+    gx.addColorStop(.72,'rgba(0,0,0,0)');
+    gx.addColorStop(1,'rgba(0,0,0,'+c.lift.toFixed(3)+')');
+    ctx.fillStyle=gx; ctx.fillRect(P,P,w,h);
+  }
+
+  // 8 — cut edge
+  ctx.lineWidth=Math.max(1,1.6*s);
+  ctx.strokeStyle='rgba(26,20,14,'+c.edge.toFixed(3)+')';
+  ctx.stroke(path);
+  ctx.restore();
+}
+
+/* =========================================================
+   11. BOARD SURFACE
+   ========================================================= */
+const SURFACES = {
+  black:   {base:'#131215', hi:'#1f1d22', vig:.55, fib:'#ffffff', fibA:.035},
+  offwhite:{base:'#e7e1d3', hi:'#f3eee2', vig:.20, fib:'#6a5c47', fibA:.08},
+  grey:    {base:'#bdb7ab', hi:'#cdc7ba', vig:.26, fib:'#5b5348', fibA:.09}
+};
+function drawBoard(ctx,W,H,s){
+  let sf=SURFACES[state.surface];
+  const base=boardBase();
+  if(isFlat()){ ctx.fillStyle=base; ctx.fillRect(0,0,W,H); return; }
+  if(state.ink==='grey') sf={...sf, base:toGrey(sf.base), hi:toGrey(sf.hi)};
+  ctx.fillStyle=sf.base; ctx.fillRect(0,0,W,H);
+  const g=ctx.createRadialGradient(W*.42,H*.34,0,W*.5,H*.5,Math.max(W,H)*.78);
+  g.addColorStop(0,sf.hi); g.addColorStop(1,sf.base);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // creases
+  const r=new Rng(hashStr(state.surface)+state.seed);
+  ctx.save();
+  ctx.globalAlpha=sf.fibA; ctx.strokeStyle=sf.fib; ctx.lineWidth=Math.max(1,1.2*s);
+  for(let i=0;i<7;i++){
+    const x=r.r()*W, y=r.r()*H;
+    ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.lineTo(x+r.bell()*W*.6, y+r.bell()*H*.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+  paintGrain(ctx,0,0,W,H,.9,s);
+  // vignette
+  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.72);
+  v.addColorStop(0,'rgba(0,0,0,0)');
+  v.addColorStop(1,'rgba(0,0,0,'+sf.vig+')');
+  ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
+}
+
+/* =========================================================
+   12. RENDER TO THE DOM
+   ========================================================= */
+const board=document.getElementById('board');
+const stage=document.getElementById('stage');
+const bgCanvas=document.getElementById('boardBg');
+
+function boardBox(){
+  const W=board.clientWidth;
+  const H=Math.round(W/state.format);
+  return {W,H};
+}
+function render(){
+  if(!state.fontsReady) return;
+  const {W,H}=boardBox();
+  board.style.height=H+'px';
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+
+  bgCanvas.width=Math.round(W*dpr); bgCanvas.height=Math.round(H*dpr);
+  const bctx=bgCanvas.getContext('2d');
+  bctx.setTransform(dpr,0,0,dpr,0,0);
+  drawBoard(bctx,W,H,dpr);
+
+  state.cuts=buildCuts();
+  const F=fitAndPlace(state.cuts,W,H);
+
+  stage.innerHTML='';
+  const frag=document.createDocumentFragment();
+  const stocks=new Set();
+  for(const c of state.cuts){
+    if(c.br) continue;
+    stocks.add(MATERIALS[c.material].label);
+    const el=document.createElement('div');
+    el.className='cut';
+    const cw=c.w+PAD*2, ch=c.h+PAD*2;
+    el.style.left=(c.x-PAD)+'px';
+    el.style.top=(c.y-PAD)+'px';
+    el.style.width=cw+'px';
+    el.style.height=ch+'px';
+    el.style.transformOrigin=(PAD+c.w/2)+'px '+(PAD+c.h/2)+'px';
+    el.style.transform='rotate('+(c.rot*180/Math.PI).toFixed(3)+'deg) skewX('+(c.skew*180/Math.PI).toFixed(3)+'deg)';
+    const cv=document.createElement('canvas');
+    cv.width=Math.ceil(cw*dpr); cv.height=Math.ceil(ch*dpr);
+    cv.style.width=cw+'px'; cv.style.height=ch+'px';
+    const cx=cv.getContext('2d');
+    drawCut(cx,c,dpr);
+    el.appendChild(cv);
+    frag.appendChild(el);
+  }
+  stage.appendChild(frag);
+
+  const n=state.cuts.filter(c=>!c.br).length;
+  document.getElementById('charCount').textContent=n+(n===1?' cut':' cuts');
+  document.getElementById('dims').textContent=W+' × '+H+' px  ·  type '+Math.round(F)+' px';
+  document.getElementById('stockLine').textContent=[...stocks].join(' / ')||'—';
+  document.getElementById('live').textContent='Composition of: '+state.text.replace(/\n/g,', ');
+  document.getElementById('seedStamp').textContent=String(state.seed).padStart(6,'0');
+  document.getElementById('brandStamp').textContent=state.brand||'—';
+}
+
+/* =========================================================
+   13. EXPORT
+   ========================================================= */
+function downloadArtwork(){
+  const {W,H}=boardBox();
+  const s=parseFloat(document.getElementById('res').value)||3;
+  const out=document.createElement('canvas');
+  out.width=Math.round(W*s); out.height=Math.round(H*s);
+  const ctx=out.getContext('2d');
+  if(!state.transparent) drawBoard(ctx,W*s,H*s,s);
+  for(const c of state.cuts){
+    if(c.br) continue;
+    ctx.save();
+    ctx.translate((c.x+c.w/2)*s,(c.y+c.h/2)*s);
+    ctx.rotate(c.rot);
+    ctx.transform(1,0,Math.tan(c.skew),1,0,0);
+    ctx.translate(-(c.w/2+PAD)*s,-(c.h/2+PAD)*s);
+    drawCut(ctx,c,s);
+    ctx.restore();
+  }
+  saveBlob(out.toDataURL('image/png'),'png');
+}
+
+/* ---- vector export: flat cut shapes + live type, for logo work ---- */
+function xmlEsc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function polyD(poly,x,y,w,h){
+  return poly.map((p,i)=>(i?'L':'M')+(x+p[0]*w).toFixed(2)+' '+(y+p[1]*h).toFixed(2)).join(' ')+' Z';
+}
+const deg = r => (r*180/Math.PI).toFixed(3);
+
+function buildSVG(){
+  const {W,H}=boardBox();
+  const defs=[], body=[], families=new Set();
+
+  state.cuts.forEach((c,i)=>{
+    if(c.br) return;
+    families.add(c.font.f.split(',')[0].replace(/["']/g,'').trim());
+    const w=c.w, h=c.h, fs=c.fs;
+    const d=polyD(c.poly,0,0,w,h);
+    defs.push('<clipPath id="k'+i+'"><path d="'+d+'"/></clipPath>');
+
+    let g='<g transform="translate('+(c.x+w/2).toFixed(2)+' '+(c.y+h/2).toFixed(2)+
+          ') rotate('+deg(c.rot)+') skewX('+deg(c.skew)+') translate('+(-w/2).toFixed(2)+' '+(-h/2).toFixed(2)+')">';
+
+    if(c.backing){
+      const b=c.backing, bw=w*(1+b.grow), bh=h*(1+b.grow);
+      const bx=b.dx*w-(bw-w)/2, by=b.dy*h-(bh-h)/2;
+      g+='<path d="'+polyD(b.poly,bx,by,bw,bh)+'" fill="'+b.color+'" transform="rotate('+
+         deg(b.rot)+' '+(w/2).toFixed(2)+' '+(h/2).toFixed(2)+')"/>';
+    }
+    g+='<path d="'+d+'" fill="'+c.paper+'"/>';
+
+    // stock screen stays vector: a dot pattern clipped to the cut
+    if(c.paperDots.a>0.02){
+      const sp=c.paperDots.sp.toFixed(2), r=(c.paperDots.sp*0.24).toFixed(2);
+      const col = lum(c.paper)>.4 ? '#2a2018' : '#e6dfd0';
+      defs.push('<pattern id="d'+i+'" patternUnits="userSpaceOnUse" width="'+sp+'" height="'+sp+
+        '" patternTransform="rotate('+deg(c.paperDots.ang)+')"><circle cx="'+(c.paperDots.sp/2).toFixed(2)+
+        '" cy="'+(c.paperDots.sp/2).toFixed(2)+'" r="'+r+'" fill="'+col+'"/></pattern>');
+      g+='<path d="'+d+'" fill="url(#d'+i+')" opacity="'+c.paperDots.a.toFixed(3)+'"/>';
+    }
+
+    const fam=c.font.f.replace(/"/g,"'");
+    let attrs='font-family="'+xmlEsc(fam)+'" font-size="'+fs.toFixed(2)+'" font-weight="'+c.font.w+'" fill="'+c.ink+'"';
+    if(c.stroke) attrs+=' stroke="'+c.stroke.c+'" stroke-width="'+(c.stroke.w*fs*2).toFixed(2)+
+                        '" stroke-linejoin="round" paint-order="stroke fill"';
+    g+='<g clip-path="url(#k'+i+')"><text x="'+(c.metric.left*fs).toFixed(2)+'" y="0" transform="translate('+
+       (c.padL*fs).toFixed(2)+' '+((c.padT+c.metric.asc)*fs).toFixed(2)+') scale('+c.scaleX.toFixed(4)+' 1)" '+
+       attrs+'>'+xmlEsc(c.text)+'</text></g>';
+    g+='</g>';
+    body.push(g);
+  });
+
+  const bg = state.transparent ? '' :
+    '<rect width="'+W+'" height="'+H+'" fill="'+boardBase()+'"/>';
+
+  return '<?xml version="1.0" encoding="UTF-8"?>\n'+
+    '<!-- '+(state.brand||'PASTE-UP')+' · cut-out composition · seed '+state.seed+'\n'+
+    '     Letters are live text. In Illustrator: Type > Create Outlines before handing off.\n'+
+    '     Typefaces used: '+[...families].join(', ')+'\n'+
+    '     Paper grain and ink wear are raster effects — use the PNG export for those. -->\n'+
+    '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n'+
+    '<defs>\n'+defs.join('\n')+'\n</defs>\n'+bg+'\n'+body.join('\n')+'\n</svg>\n';
+}
+
+function downloadSVG(){
+  const blob=new Blob([buildSVG()],{type:'image/svg+xml'});
+  saveBlob(URL.createObjectURL(blob),'svg',true);
+}
+
+function saveBlob(href,ext,revoke){
+  const name=(state.brand||'PASTEUP').replace(/[^A-Za-z0-9]+/g,'-').toUpperCase();
+  const a=document.createElement('a');
+  a.download=name+'-cutout-'+String(state.seed).padStart(6,'0')+'.'+ext;
+  a.href=href;
+  a.click();
+  if(revoke) setTimeout(()=>URL.revokeObjectURL(href),4000);
+}
+
+/* =========================================================
+   14. UI WIRING
+   ========================================================= */
+// sliders
+const slidersEl=document.getElementById('sliders');
+SLIDERS.forEach(s=>{
+  const wrap=document.createElement('div');
+  wrap.className='slider';
+  wrap.innerHTML='<div class="lab"><label for="sl-'+s.id+'">'+s.label+'</label><span class="val" id="v-'+s.id+'">'+s.v+'</span></div>'+
+    '<input type="range" min="0" max="100" value="'+s.v+'" id="sl-'+s.id+'">';
+  slidersEl.appendChild(wrap);
+  const inp=wrap.querySelector('input');
+  inp.addEventListener('input',()=>{
+    state.s[s.id]=inp.value/100;
+    document.getElementById('v-'+s.id).textContent=inp.value;
+    schedule();
+  });
+});
+
+// swatches
+const swWrap=document.getElementById('swatches');
+state.palette.forEach((col,i)=>{
+  const d=document.createElement('div');
+  d.className='sw';
+  d.innerHTML='<span style="background:'+col+'"></span><b>0'+(i+1)+'</b>'+
+              '<input type="color" value="'+col+'" aria-label="Brand colour '+(i+1)+'">';
+  const inp=d.querySelector('input'), sp=d.querySelector('span');
+  inp.addEventListener('input',()=>{
+    state.palette[i]=inp.value; sp.style.background=inp.value; schedule();
+  });
+  swWrap.appendChild(d);
+});
+
+function segment(id,apply){
+  const el=document.getElementById(id);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...el.children].forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    apply(b.dataset.v); schedule();
+  });
+}
+segment('formatSeg',v=>{state.format=parseFloat(v);});
+segment('surfaceSeg',v=>{state.surface=v;});
+segment('inkSeg',v=>{
+  state.ink = v;
+  document.getElementById('swatchField').classList.toggle('off',v!=='colour');
+});
+segment('finishSeg',v=>{ state.flat = v==='flat'; });
+document.getElementById('transparent').addEventListener('change',e=>{state.transparent=e.target.checked;});
+
+const textEl=document.getElementById('text');
+textEl.addEventListener('input',()=>{state.text=textEl.value||' ';schedule();});
+const brandEl=document.getElementById('brand');
+brandEl.addEventListener('input',()=>{state.brand=brandEl.value;document.getElementById('brandStamp').textContent=state.brand||'—';});
+
+document.getElementById('reshuffle').addEventListener('click',()=>{state.seed=createSeed();render();});
+document.getElementById('download').addEventListener('click',downloadArtwork);
+document.getElementById('downloadSvg').addEventListener('click',downloadSVG);
+
+let raf=null;
+function schedule(){ if(raf) cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{raf=null;render();}); }
+
+let rz=null;
+window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,180);});
+
+/* =========================================================
+   15. BOOT — make sure every family is really loaded before measuring
+   ========================================================= */
+(function boot(){
+  board.style.height=Math.round(board.clientWidth/state.format)+'px';
+  const loads=FONTS.map(f=>{
+    try{ return document.fonts.load(f.w+' 100px '+f.f,'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'); }
+    catch(e){ return Promise.resolve(); }
+  });
+  const done=()=>{
+    metricCache.clear();
+    state.fontsReady=true;
+    board.classList.remove('busy');
+    render();
+  };
+  Promise.all(loads).then(()=>document.fonts.ready).then(done).catch(done);
+  setTimeout(()=>{ if(!state.fontsReady) done(); },6000); // never block on a slow font CDN
+})();
+</script>
+</body>
+</html>

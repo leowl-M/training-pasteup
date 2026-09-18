@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PASTE-UP — collage tipografico ritagliato</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Alfa+Slab+One&family=Anton&family=Archivo:wght@800&family=Archivo+Black&family=Archivo+Narrow:wght@700&family=Bebas+Neue&family=Bodoni+Moda:opsz,wght@6..96,900&family=Bungee&family=Courier+Prime:wght@700&family=DM+Serif+Display&family=Fjalla+One&family=IBM+Plex+Mono:wght@400;600&family=Instrument+Serif&family=Oswald:wght@700&family=Passion+One:wght@900&family=Playfair+Display:wght@900&family=Rubik+Mono+One&family=Space+Mono:wght@700&family=Special+Elite&family=Staatliches&family=Ultra&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { neutral: { 850: '#1f1f1f', 950: '#0a0a0a' } }
+      }
+    }
+  }
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 overflow-hidden text-sm font-sans flex flex-col md:flex-row h-screen antialiased selection:bg-neutral-700">
+
+<!-- navbar mobile -->
+<nav class="md:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-[#171717]">
+  <span class="font-semibold text-sm">PASTE-UP</span>
+  <button id="menuToggle" class="p-1.5 hover:bg-neutral-800 rounded-md" aria-label="Apri impostazioni">
+    <i data-lucide="menu" class="w-5 h-5"></i>
+  </button>
+</nav>
+
+<div id="sidebarOverlay" class="sidebar-overlay md:hidden"></div>
+
+<aside id="sidebar" class="w-80 flex-shrink-0 bg-[#171717] border-r border-neutral-800 flex flex-col h-full z-50 custom-scrollbar overflow-y-auto">
+
+  <!-- header mobile -->
+  <div class="md:hidden flex items-center justify-between p-4 border-b border-neutral-800">
+    <h1 class="font-semibold">Impostazioni</h1>
+    <button id="menuClose" class="p-2 hover:bg-neutral-800 rounded-md" aria-label="Chiudi impostazioni">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </button>
+  </div>
+
+  <!-- header desktop -->
+  <div class="hidden md:block p-5 border-b border-neutral-800">
+    <h1 class="font-bold text-base">PASTE-UP</h1>
+    <p class="text-[10px] text-neutral-500 mt-1 leading-relaxed">Ogni carattere è ritagliato da una fonte stampata diversa.</p>
+  </div>
+
+  <div class="flex-1 pb-10">
+
+    <!-- ============ TESTO ============ -->
+    <details class="group border-b border-neutral-800" open>
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Testo</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-4">
+
+        <div class="space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] text-neutral-500" for="text">Composizione</label>
+            <span id="charCount" class="text-[10px] font-mono tabular-nums text-neutral-400">0 ritagli</span>
+          </div>
+          <textarea id="text" rows="3" maxlength="160" spellcheck="false"
+            class="w-full bg-neutral-950 border border-neutral-700 rounded-md px-2.5 py-2 text-sm resize-y custom-scrollbar">NEW RANSOM
+CUT-OUTS</textarea>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] text-neutral-500" for="brand">Firma</label>
+            <span class="text-[10px] font-mono tabular-nums text-neutral-400">max 18</span>
+          </div>
+          <input id="brand" type="text" value="WOOZY" maxlength="18"
+            class="w-full bg-neutral-950 border border-neutral-700 rounded-md px-2.5 py-1.5 text-xs font-mono uppercase">
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ============ FORMATO ============ -->
+    <details class="group border-b border-neutral-800" open>
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Formato</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-4">
+
+        <div class="space-y-1">
+          <span class="text-[10px] text-neutral-500 block">Proporzione</span>
+          <div class="seg grid grid-cols-4 gap-2" id="formatSeg" role="group" aria-label="Proporzione">
+            <button type="button" data-v="1" aria-pressed="true">1:1</button>
+            <button type="button" data-v="0.8" aria-pressed="false">4:5</button>
+            <button type="button" data-v="0.5625" aria-pressed="false">9:16</button>
+            <button type="button" data-v="1.7778" aria-pressed="false">16:9</button>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] text-neutral-500 block">Supporto</span>
+          <div class="seg grid grid-cols-3 gap-2" id="surfaceSeg" role="group" aria-label="Supporto">
+            <button type="button" data-v="black" aria-pressed="true">Nero</button>
+            <button type="button" data-v="offwhite" aria-pressed="false">Avorio</button>
+            <button type="button" data-v="grey" aria-pressed="false">Riciclata</button>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] text-neutral-500 block">Inchiostro</span>
+          <div class="seg grid grid-cols-3 gap-2" id="inkSeg" role="group" aria-label="Inchiostro">
+            <button type="button" data-v="colour" aria-pressed="true">Colore</button>
+            <button type="button" data-v="grey" aria-pressed="false">Grigi</button>
+            <button type="button" data-v="pure" aria-pressed="false">B/N</button>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] text-neutral-500 block">Finitura</span>
+          <div class="seg grid grid-cols-2 gap-2" id="finishSeg" role="group" aria-label="Finitura">
+            <button type="button" data-v="printed" aria-pressed="true">Stampata</button>
+            <button type="button" data-v="flat" aria-pressed="false">Solo forme</button>
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ============ COLORI ============ -->
+    <details class="group border-b border-neutral-800" id="swatchField" open>
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Colori stock</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-2" id="swatches"></div>
+      <p class="px-5 pb-4 text-[10px] text-neutral-500 leading-relaxed" id="swatchNote">Usati come inchiostro di marca sui ritagli.</p>
+    </details>
+
+    <!-- ============ COMPOSIZIONE ============ -->
+    <details class="group border-b border-neutral-800" open>
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Composizione</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-4" id="sliders"></div>
+    </details>
+
+    <!-- ============ RITAGLI ============ -->
+    <details class="group border-b border-neutral-800">
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Ritagli</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-3">
+        <p class="text-[10px] text-neutral-500 leading-relaxed">
+          <b class="text-neutral-400 font-medium">Click</b> su una lettera per ritagliarla di nuovo.<br>
+          <b class="text-neutral-400 font-medium">Alt + click</b> per bloccarla: resterà com'è anche dopo un rimescolamento.
+        </p>
+        <div class="flex justify-between items-center">
+          <span class="text-[10px] text-neutral-500">Bloccati</span>
+          <span id="lockCount" class="text-[10px] font-mono tabular-nums text-neutral-400">0</span>
+        </div>
+        <button id="btnResetCuts" type="button"
+          class="w-full flex items-center justify-center gap-2 border border-neutral-700 py-2 rounded-md hover:bg-neutral-800 transition-colors text-xs">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Sblocca tutti i ritagli
+        </button>
+      </div>
+    </details>
+
+    <!-- ============ EXPORT ============ -->
+    <details class="group border-b border-neutral-800" open>
+      <summary class="flex justify-between items-center px-5 py-3.5 cursor-pointer select-none font-medium hover:bg-neutral-800/50 transition-colors">
+        <span>Export</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform group-open:-rotate-180"></i>
+      </summary>
+      <div class="px-5 pb-4 space-y-3">
+
+        <button id="btnReshuffle" type="button"
+          class="w-full flex items-center justify-center gap-2 bg-neutral-200 text-black py-2 rounded-md font-medium hover:bg-white transition-colors">
+          <i data-lucide="shuffle" class="w-4 h-4"></i> Rimescola i ritagli
+        </button>
+
+        <label class="flex items-center gap-2 text-[10px] text-neutral-500 cursor-pointer select-none py-1">
+          <input id="transparent" type="checkbox" class="w-3.5 h-3.5 accent-neutral-200">
+          Sfondo trasparente nell'export
+        </label>
+
+        <div class="space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] text-neutral-500" for="res">Risoluzione</label>
+            <span id="valRes" class="text-[10px] font-mono tabular-nums text-neutral-400">—</span>
+          </div>
+          <div class="select-wrap relative">
+            <select id="res" class="w-full bg-neutral-950 border border-neutral-700 rounded-md px-2.5 py-1.5 text-xs">
+              <option value="2">2×</option>
+              <option value="3" selected>3×</option>
+              <option value="4">4×</option>
+            </select>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-neutral-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <div class="grid gap-2">
+          <button id="btnPng" type="button"
+            class="w-full flex items-center justify-center gap-2 border border-neutral-700 py-2 rounded-md hover:bg-neutral-800 transition-colors">
+            <i data-lucide="download" class="w-4 h-4"></i> Esporta PNG
+          </button>
+          <button id="btnSvg" type="button"
+            class="w-full flex items-center justify-center gap-2 border border-neutral-700 py-2 rounded-md hover:bg-neutral-800 transition-colors">
+            <i data-lucide="file-code" class="w-4 h-4"></i> Esporta SVG
+          </button>
+        </div>
+
+      </div>
+    </details>
+
+  </div>
+</aside>
+
+<!-- ============ STAGE ============ -->
+<main class="flex-1 flex flex-col bg-neutral-950 overflow-hidden relative">
+
+  <div id="stageArea" class="flex-1 flex items-center justify-center overflow-hidden relative">
+    <div id="canvasWrap" class="relative shadow-2xl busy" style="outline: 1px solid #262626;">
+      <canvas id="boardBg"></canvas>
+      <div id="stage" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between gap-4 px-5 py-2.5 border-t border-neutral-800 text-[10px] text-neutral-500">
+    <span id="stockLine" class="truncate">—</span>
+    <span class="flex-shrink-0 font-mono tabular-nums">
+      <span id="brandStamp" class="text-neutral-400">WOOZY</span>
+      <span class="text-neutral-700 px-1.5">·</span>
+      <span id="seedStamp">000000</span>
+      <span class="text-neutral-700 px-1.5">·</span>
+      <span id="dims">—</span>
+    </span>
+  </div>
+
+  <div class="sr-only" id="live" aria-live="polite"></div>
+</main>
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
